@@ -1,6 +1,6 @@
 # OctoPrint-Datasetcollector
 
-**TODO:** Describe what your plugin does.
+Dataset collection plugin for Octoprint.
 
 ## Setup
 
