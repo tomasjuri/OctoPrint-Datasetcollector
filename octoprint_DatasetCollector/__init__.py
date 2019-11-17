@@ -10,10 +10,38 @@ from __future__ import absolute_import
 # Take a look at the documentation on what other plugin mixins are available.
 
 import octoprint.plugin
+from .CameraCapture import CameraCapture
+import logging
+from PIL import Image
 
 class DatasetcollectorPlugin(octoprint.plugin.SettingsPlugin,
-                             octoprint.plugin.AssetPlugin,
-                             octoprint.plugin.TemplatePlugin):
+							 octoprint.plugin.AssetPlugin,
+							 octoprint.plugin.TemplatePlugin,
+							 octoprint.plugin.StartupPlugin):
+	layer = 0
+	gcode = "G150"
+
+	def on_after_startup(self):
+		self._logger.info("Dataset Collector plugin has been started")
+		self._logger.setLevel(logging.DEBUG)
+
+		self.capture = CameraCapture()
+
+		logger = logging.getLogger("octoprint.util.comm.command_phases")
+		logger.setLevel(logging.DEBUG)
+
+	def hook_gcode_sent(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
+		if gcode and cmd[:4] == self.gcode:
+			self._logger.info("Gcode %s processed.", self.gcode)
+			try:
+				img = self.capture.get_img()
+				path = '/home/pi/devel/OctoPrint-Datasetcollector/images/img_' + \
+					   str(self.layer) + '.png'
+				self._logger.info("Saving image to %s.", path)
+				img.save(path)
+			except:
+				self._logger.error("IMG capture failed")
+			self.layer += 1
 
 	##~~ SettingsPlugin mixin
 
@@ -54,6 +82,7 @@ class DatasetcollectorPlugin(octoprint.plugin.SettingsPlugin,
 				pip="https://github.com/tomasjuri/OctoPrint-Datasetcollector/archive/{target_version}.zip"
 			)
 		)
+	
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
@@ -67,6 +96,8 @@ def __plugin_load__():
 
 	global __plugin_hooks__
 	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.hook_gcode_sent
+
 	}
 
