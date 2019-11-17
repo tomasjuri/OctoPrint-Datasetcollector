@@ -16,11 +16,7 @@ class CameraCapture(object):
         self.url = url
         self.timeout = int(timeout)
         self.verify = verify
-        self.logger.info("Camera capture initialized")
-
-    def bytes_to_img(self, img_bytes):
-        img = Image.frombytes('RGB', (640, 480), img_bytes, 'raw')
-        return img
+        self.logger.info("CameraCapture initialized")
 
     def get_img(self):
         self.logger.info("Getting image")
